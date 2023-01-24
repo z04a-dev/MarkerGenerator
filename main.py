@@ -47,5 +47,5 @@ newImg.paste(arrow,(width-320,int(982/2)),arrow.convert('RGBA'))
 newImg.paste(arrow,(160,int(982/2)),arrow.convert('RGBA'))
 
 #сохранение
-imgName = "result/" + args.library + "-" + args.room + ".png"
+imgName = args.library + "-" + args.room + ".png"
 newImg.save(imgName)

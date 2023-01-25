@@ -1,5 +1,5 @@
 #by z04a
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageFont
 import qrcode, hashlib
 
 #библиотека и код для ввода параметров при запуске скприта
@@ -49,6 +49,15 @@ def create(room,orientation):
     arrow = Image.open('src/arrow.png').convert('RGBA')
     newImg.paste(arrow,(width-320,int(height/2-982/2)),arrow.convert('RGBA'))
     newImg.paste(arrow,(160,int(height/2-982/2)),arrow.convert('RGBA'))
+
+    #вставка названия
+
+    vot = Image.new(mode = "RGB", size = (width,80), color = (255, 255, 255))
+    newImg.paste(vot, (0,height-80))
+    idraw = ImageDraw.Draw(newImg)
+    text = room
+    font = ImageFont.truetype("arial.ttf", size=80)
+    idraw.text((0,height-80), text, font=font, fill=(0, 0, 0))
 
     #сохранение
     if orientation == 'horizontal':

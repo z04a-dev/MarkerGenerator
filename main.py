@@ -1,6 +1,8 @@
 #by z04a
 from PIL import Image, ImageDraw, ImageFont
 import qrcode, hashlib
+from alive_progress import alive_bar
+import time, sys
 
 #библиотека и код для ввода параметров при запуске скприта
 import argparse
@@ -66,9 +68,29 @@ def create(room,orientation):
     else:
         imgName = "result_ver/vert-" + args.library + "-" + room + ".png"
         newImg.save(imgName)
+        
+#пробуем открыть текстовый файл        
+try:
+    room_file = open('library.txt', 'r')
+except:
+    print('ERR: File not found. Did you put your data in library.txt?')
+    sys.exit() # если файл не найден, программа закрывается.
+
+#запись всех строк в список
+data = room_file.read()
+list_data = data.split("\n")
+room_file.close()
+
+#вывод прогресса
+with alive_bar(len(list_data)) as bar: 
+    for i in range(0,len(list_data)):
+        create(list_data[i],'horizontal')
+        create(list_data[i],'vertical')
+        bar(i/100 * (100 / len(list_data)))
+        
+
     
-with open("library.txt") as file:
-    for line in file:
-        room = line.rstrip()
-        create(room,'horizontal')
-        create(room,'vertical')
+
+           
+
+

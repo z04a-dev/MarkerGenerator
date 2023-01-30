@@ -74,7 +74,7 @@ def create(room):
             vot = Image.new(mode = "RGB", size = (width,80), color = (255, 255, 255))
             newImg.paste(vot, (0,height-80))
             idraw = ImageDraw.Draw(newImg)
-            font = ImageFont.truetype("arial.ttf", size=80)
+            font = ImageFont.truetype("src/newFont.ttf", size=80)
             idraw.text((0,height-80), room, font=font, fill=(0, 0, 0))
 
         #сохранение

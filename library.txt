@@ -1,8 +1,5 @@
-biology биология
-it информатика
-russian русский язык
-literature литература
-food столовая
-physics физика
-maths математика
-geography география
+minecraft Майнкрафт
+csgo Контер Страйк
+terraria Террария
+re4 Резидент Эвил 4
+skyrim Скайрим

@@ -4,6 +4,9 @@ from PIL import Image, ImageDraw, ImageFont
 import qrcode, hashlib
 from alive_progress import alive_bar
 import time, sys
+from gtts import gTTS
+import zipfile, os
+import sqlite3
 
 #библиотека и код для ввода параметров при запуске скприта
 import argparse
@@ -18,7 +21,7 @@ DEFAULT_IDENTIFIER = "3257b0ae1f8d05fed50a757017a93688" #md5 идентифик�
 
 LIBRARY_HASH = hashlib.md5(args.library.encode('utf-8')).hexdigest() #md5 идентификатор библиотеки
 
-def create(room, ruroom):
+def create(room, ruroom, cursor):
     
     #Сборка строки для генерации qr кода
 
@@ -29,7 +32,9 @@ def create(room, ruroom):
     #---------------
 
     result_file.write(f'{FINAL_HASH} {room} {ruroom}') #запись информации о комнате в result.txt
-
+    
+    cursor.execute(f'''INSERT INTO {args.library} (qr,name,nameRU) VALUES ("{ROOM_HASH}","{room.strip()}","{ruroom.strip()}")''') #запись информации в базу данных    
+	
     upscaleqr_size = 1150 #разрешение, до которого будет масштабироваться qr код (1150x1150 к примеру)
 
     width = 2808 #конечная ширина метки
@@ -38,6 +43,9 @@ def create(room, ruroom):
     #создание qr кода
     qrimg = qrcode.make(FINAL_HASH)
     upqr = qrimg.resize((upscaleqr_size,upscaleqr_size),resample=1)
+    
+    tts = gTTS(ruroom, lang='ru')
+    tts.save('./audio/' + args.library + '_' + room + '.mp3')
 
     for i in range(1,3):
         if(i == 2):
@@ -87,6 +95,7 @@ def create(room, ruroom):
             imgName = "result_ver/vert-" + args.library + "-" + room + ".png"
             newImg.save(imgName)
 
+
 #---------------main code---------------#
         
 #пробуем открыть текстовый файл        
@@ -117,16 +126,65 @@ except:
     print('ERR: src images not found')
     sys.exit() # если файл не найден, программа закрывается.
 
-#вывод прогресса
+
+conn = sqlite3.connect(args.library + '.db') 
+c = conn.cursor() #создание базы данных
+
+c.execute(f'''
+          CREATE TABLE {args.library}
+          ([qr] TEXT(32), [name] TEXT(50), [nameRU] TEXT(50))
+          ''') #создание таблицы в базе данных
+
+#вывод прогресс
 with alive_bar(len(list_data)) as bar: 
     for i in range(0,len(list_data)):
-        create(list_data[i], listru_data[i])
+        create(list_data[i], listru_data[i],c)
         bar(i/100 * (100 / len(list_data)))
 
 result_file.close()
 
-    
+conn.commit() #произвести запись данных в базу данных
+               
+tzf = zipfile.ZipFile(args.library + ".zip", "w") #создание zip архива для приложения
+tzf.write(args.library + ".db")
+for dirname, subdirs, files in os.walk("audio"):
+    tzf.write(dirname)
+    for filename in files:
+    	if(filename != 'git.txt'):
+        	tzf.write(os.path.join(dirname, filename))
+tzf.close()
+        	
+zf = zipfile.ZipFile("resultzip/" + args.library + "_library" + ".zip", "w") #создание конечного zip архива для пользователя
+zf.write("library.txt")
+zf.write("result.txt")
+zf.write(args.library + ".zip")
+for dirname, subdirs, files in os.walk("result_hor"):
+    zf.write(dirname)
+    for filename in files:
+    	if(filename != 'git.txt'):
+            zf.write(os.path.join(dirname, filename))
+            os.remove("./result_hor/" + filename)
 
-           
+for dirname, subdirs, files in os.walk("result_ver"):
+    zf.write(dirname)
+    for filename in files:
+    	if(filename != 'git.txt'):
+            zf.write(os.path.join(dirname, filename))
+            os.remove("./result_ver/" + filename)
+        	
+zf.close()
 
+if os.path.exists(args.library + ".db"):
+  os.remove(args.library + ".db")
+else:
+    print("ERR: failed to delete .db file")
 
+if os.path.exists(args.library + ".zip"):
+  os.remove(args.library + ".zip")
+else:
+    print("ERR: failed to delete .zip file")
+
+for dirname, subdirs, files in os.walk("audio"):
+    for filename in files:
+    	if(filename != 'git.txt'):
+            os.remove("./audio/" + filename)
